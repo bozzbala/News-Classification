@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_recall_fscore_support as score, mean_squared_error
 from sklearn.metrics import confusion_matrix,accuracy_score
@@ -66,6 +67,14 @@ def add_parameter_ui(clf_name):
         params["C"] = C
         params["SS"] = SS
 
+    elif clf_name == "Random Forest":
+        N = st.sidebar.slider("n_estimators", 10, 200, step=10)
+        M = st.sidebar.slider("max_depth", 2, 20)
+        SS = st.sidebar.slider("min_samples_split", 2, 10)
+        params["N"] = N
+        params["M"] = M
+        params["SS"] = SS
+
     return params
 
 
@@ -85,6 +94,9 @@ def get_classifier(clf_name,params):
 
     elif clf_name == "Naive Bayes":
         clf = MultinomialNB()
+
+    elif clf_name == "Random Forest":
+        clf = RandomForestClassifier(n_estimators=params["N"], max_depth=params["M"], min_samples_split=params["SS"])
 
     return clf
 
@@ -199,9 +211,10 @@ def main():
         st.write("The following is the DataFrame of the `BBC News` dataset.")
         data = pd.read_csv(r"data\BBC News Train.csv")
         st.write(data)
+
     if choice=="About":
         with st.container():
-            st.title("Classifying News Articles Based on Their Headlines Using Machine Learning Algorithms")
+            st.title("Classifying News Articles Using Machine Learning Algorithms")
             st.markdown(""" 
 			#### Built with Streamlit by Temirlan Ibragimov
 			""")
@@ -213,7 +226,7 @@ def main():
 
         st.info("Prediction with ML")
         news_text = st.text_area("Enter Text", "Type Here")
-        all_ml_models = ["Logistic Regression", "Naive Bayes", "Decision Tree", "SVM", "KNN"]
+        all_ml_models = ["Logistic Regression", "Naive Bayes", "Decision Tree", "SVM", "KNN", "Random Forest"]
         model_choice = st.selectbox("Choose ML Model", all_ml_models)
         prediction_labels = {'business':0, 'tech':1, 'politics':2, 'sport':3, 'entertainment':4}
         params = add_parameter_ui(model_choice)
@@ -230,14 +243,16 @@ def main():
             st.markdown("<hr>",unsafe_allow_html=True)
             st.subheader(f"Classifier Used: {model_choice}")
             compute(Y_pred,Y_test)
-            if st.checkbox("WordCloud"):
-                st.subheader("WordCloud: ")
-                c_text = news_text
-                wordcloud = WordCloud().generate(c_text)
-                plt.imshow(wordcloud, interpolation='bilinear')
-                plt.axis("off")
-                plt.show()
-                st.pyplot()
+
+            st.subheader("WordCloud: ")
+            c_text = news_text
+            wordcloud = WordCloud().generate(c_text)
+            fig, ax = plt.subplots()
+            ax.imshow(wordcloud, interpolation='bilinear')
+            ax.axis("off")
+
+            st.pyplot(fig)
+    
     if choice == "NLP":
         st.info("Natural Language Processing")
         news_text = st.text_area("Enter Text", "Type Here")
